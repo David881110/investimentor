@@ -1,0 +1,340 @@
+/* 🎨 Allgemeine Stile */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+}
+
+body {
+    background-color: #f4f4f9;
+    color: #333;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* 🔹 HEADER */
+header {
+    background-color: #0057b8;
+    color: #fff;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    flex-wrap: wrap;
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+/* 🔹 Blog-Button */
+nav {
+    margin-right: 20px;
+}
+
+.blog-button {
+    background-color: #fff;
+    color: #0057b8;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 2px solid #fff;
+    transition: 0.3s ease;
+}
+
+.blog-button:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #003c80;
+    border: 2px solid #003c80;
+}
+
+/* 🔹 ANALYSE-BEREICH */
+.analysis-section {
+    background-color: #fff;
+    padding: 2rem;
+    margin-top: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+/* 🔹 DROPDOWN & BUTTONS */
+.dropdown-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap; /* ✅ Buttons & Dropdown auf kleinen Screens untereinander */
+}
+
+select {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: 0.3s ease;
+    width: 100%; /* ✅ Volle Breite auf kleinen Screens */
+    max-width: 300px;
+}
+
+select:focus {
+    border-color: #0057b8;
+}
+
+button {
+    background-color: #0057b8;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+    width: 100%; /* ✅ Volle Breite auf kleinen Screens */
+    max-width: 300px;
+}
+
+button:hover {
+    background-color: #004494;
+    transform: scale(1.05);
+}
+
+/* 🔹 CHART-BEREICH */
+#chartContainer {
+    position: relative;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    height: 400px;
+}
+
+#chartAnalysis {
+    text-align: center;
+    font-weight: 500;
+    margin-top: 1rem;
+    color: #333;
+}
+
+/* 🔹 FOOTER */
+footer {
+    background-color: #0057b8;
+    color: #fff;
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: auto;
+    box-shadow: 0px -4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 🔹 ADMIN-PANEL (Passwortgeschützter Bereich) */
+.upload-section {
+    background-color: #fff;
+    padding: 2rem;
+    margin-top: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+#passwordInput {
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    width: 100%; /* ✅ Volle Breite auf kleinen Screens */
+    max-width: 250px;
+    outline: none;
+    transition: 0.3s ease;
+}
+
+#passwordInput:focus {
+    border-color: #0057b8;
+}
+
+.upload-section button {
+    display: inline-block;
+    margin-top: 10px;
+}
+
+#uploadContainer {
+    margin-top: 20px;
+    display: none;
+}
+
+#uploadStatus {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* ✅ **MOBILE RESPONSIVENESS** */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+    }
+
+    nav {
+        margin: 0;
+    }
+
+    .blog-button {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    select, button {
+        width: 100%;
+        max-width: none;
+    }
+
+    #chartContainer {
+        height: 300px;
+    }
+
+    footer {
+        padding: 1rem;
+    }
+}
+
+/* 🔹 InvestiMentor Aktienscreener - Überschrift schöner gestalten */
+.screener-title {
+    font-size: 2rem; /* Größere Schrift für bessere Lesbarkeit */
+    font-weight: bold;
+    text-align: center;
+    color: #0057b8; /* InvestiMentor Blau */
+    margin-bottom: 20px;
+    padding: 15px 0;
+    background: linear-gradient(to right, #0057b8, #007bff); /* Sanfter Farbverlauf */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+    text-transform: ;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* 🔹 Abstand und Lesbarkeit optimieren */
+.analysis-section {
+    padding: 2.5rem 2rem; /* Mehr Platz für Inhalte */
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+/* 🔹 Animationseffekt für sanftes Einblenden */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+/* 🔹 Blog-Seite Styling */
+.blog-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.blog-post {
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    width: 100%;
+    max-width: 350px;
+    text-align: center;
+    transition: transform 0.3s ease-in-out;
+}
+
+.blog-post:hover {
+    transform: translateY(-5px);
+}
+
+.blog-post img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.blog-post h2 {
+    font-size: 1.5rem;
+    margin: 15px;
+    color: #0057b8;
+}
+
+.blog-post p {
+    font-size: 1rem;
+    margin: 10px 15px;
+    color: #333;
+}
+
+.blog-post a {
+    display: block;
+    text-decoration: none;
+    background-color: #0057b8;
+    color: #fff;
+    padding: 10px;
+    margin: 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.blog-post a:hover {
+    background-color: #004494;
+}
+
+/* 🔹 Navigations-Button */
+.nav-button {
+    background-color: #fff;
+    color: #0057b8;
+    padding: 0.6rem 1.2rem;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 2px solid #fff;
+    transition: 0.3s ease;
+}
+
+.nav-button:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #003c80;
+    border: 2px solid #003c80;
+}

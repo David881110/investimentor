@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Aktien Upload</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="admin.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Admin-Bereich</h1>
+        <nav>
+            <a href="index.html" class="cta">🔙 Zur Startseite</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="admin-upload">
+            <h2>Aktiendaten hochladen</h2>
+            <input type="file" id="fileUpload" accept=".txt">
+            <button onclick="uploadFile()">📤 Hochladen</button>
+            <p id="uploadStatus"></p>
+        </section>
+    </main>
+
+</body>
+</html>
