@@ -316,3 +316,37 @@ option:hover {
         width: 90%;
     }
 }
+
+/* 🔹 Neuer Footer-Stil */
+footer {
+    background-color: #0057b8;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    font-size: 0.9rem;
+    margin-top: auto;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    bottom: 0;
+    width: 100%;
+}
+
+/* 🔹 Schönere Footer-Links */
+footer a {
+    color: white;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+footer a:hover {
+    color: #ffdd57;
+}
+
+/* 🔹 Mobile-Optimierung */
+@media (max-width: 600px) {
+    footer {
+        font-size: 0.8rem;
+        padding: 12px 0;
+    }
+}
