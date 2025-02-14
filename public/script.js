@@ -18,48 +18,54 @@ async function loadStocks() {
         allStocks = await response.json();
         console.log("🔍 Geladene Aktien:", allStocks);
 
-        updateDropdown(allStocks);
+        updateStockList(allStocks);
     } catch (error) {
         console.error("❌ Fehler beim Laden der Aktien:", error);
     }
 }
 
-// 🔹 Aktien ins Dropdown einfügen (Dropdown wird nicht überschrieben!)
-function updateDropdown(stocks) {
-    const dropdown = document.getElementById("stockDropdown");
-
-    // ❌ Falls Dropdown bereits befüllt wurde, nicht erneut überschreiben!
-    if (dropdown.options.length > 1) {
-        console.log("⚠️ Aktien bereits geladen, kein erneutes Einfügen!");
-        return;
-    }
-
-    dropdown.innerHTML = '<option value="">🔍 Aktie auswählen...</option>';
+// 🔹 Aktien ins "datalist"-Dropdown einfügen
+function updateStockList(stocks) {
+    const stockList = document.getElementById("stockList");
+    stockList.innerHTML = ""; // Leeren, um doppelte Einträge zu vermeiden
 
     stocks.forEach(stock => {
         if (!stock.name || !stock.ticker) return;
         const option = document.createElement("option");
-        option.value = stock.ticker;
-        option.textContent = `${stock.name} (${stock.ticker})`;
-        dropdown.appendChild(option);
+        option.value = `${stock.name} (${stock.ticker})`;
+        stockList.appendChild(option);
     });
 
-    console.log("✅ Aktien ins Dropdown eingefügt!");
+    console.log("✅ Aktien in das Suchfeld eingefügt!");
+}
+
+// 🔹 Live-Suche nach Aktien
+function filterStocks() {
+    const input = document.getElementById("stockSearch").value.toLowerCase();
+    const matchedStock = allStocks.find(stock =>
+        `${stock.name} (${stock.ticker})`.toLowerCase() === input
+    );
+
+    if (matchedStock) {
+        console.log("📌 Aktie gewählt: " + matchedStock.ticker);
+    }
 }
 
 // 🔹 Funktion zum Analysieren der gewählten Aktie
 async function analyzeStock() {
-    const stockDropdown = document.getElementById("stockDropdown");
-    const stockTicker = stockDropdown.value;
+    const stockInput = document.getElementById("stockSearch").value;
+    const selectedStock = allStocks.find(stock =>
+        `${stock.name} (${stock.ticker})` === stockInput
+    );
 
-    if (!stockTicker) {
-        document.getElementById("chartAnalysis").innerText = "Bitte eine Aktie auswählen!";
+    if (!selectedStock) {
+        document.getElementById("chartAnalysis").innerText = "Bitte eine gültige Aktie auswählen!";
         return;
     }
 
-    console.log(`📡 Lade Daten für ${stockTicker}...`);
+    console.log(`📡 Lade Daten für ${selectedStock.ticker}...`);
     try {
-        const response = await fetch(`/stock-data?ticker=${stockTicker}`);
+        const response = await fetch(`/stock-data?ticker=${selectedStock.ticker}`);
         const data = await response.json();
 
         if (data.error) {
@@ -68,8 +74,8 @@ async function analyzeStock() {
         }
 
         console.log("📊 Daten für Diagramm erhalten:", data);
-        document.getElementById("chartAnalysis").innerText = `✅ Analyse für ${stockTicker}`;
-        renderChart(data, stockTicker);
+        document.getElementById("chartAnalysis").innerText = `✅ Analyse für ${selectedStock.ticker}`;
+        renderChart(data, selectedStock.ticker);
     } catch (error) {
         console.error("❌ Fehler beim Laden der Aktien-Daten:", error);
     }
