@@ -2,8 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStocks();
     document.getElementById("analyzeButton").addEventListener("click", analyzeStock);
 });
-let allStocks = []; // Speichert alle Aktien für die Suche
 
+let allStocks = []; // Speichert alle Aktien für das Dropdown
+
+// 🔹 Aktien aus /stocks laden (nur einmal)
 async function loadStocks() {
     try {
         console.log("📡 Lade Aktien aus /stocks...");
@@ -22,9 +24,17 @@ async function loadStocks() {
     }
 }
 
+// 🔹 Aktien ins Dropdown einfügen (Dropdown wird nicht überschrieben!)
 function updateDropdown(stocks) {
     const dropdown = document.getElementById("stockDropdown");
-    dropdown.innerHTML = '<option value="">🔍 Aktie suchen oder auswählen...</option>';
+
+    // ❌ Falls Dropdown bereits befüllt wurde, nicht erneut überschreiben!
+    if (dropdown.options.length > 1) {
+        console.log("⚠️ Aktien bereits geladen, kein erneutes Einfügen!");
+        return;
+    }
+
+    dropdown.innerHTML = '<option value="">🔍 Aktie auswählen...</option>';
 
     stocks.forEach(stock => {
         if (!stock.name || !stock.ticker) return;
@@ -37,46 +47,35 @@ function updateDropdown(stocks) {
     console.log("✅ Aktien ins Dropdown eingefügt!");
 }
 
-// 🔍 Live-Suche im Dropdown aktivieren
-document.getElementById("stockDropdown").addEventListener("input", function () {
-    const searchValue = this.value.toLowerCase();
-    const filteredStocks = allStocks.filter(stock =>
-        stock.name.toLowerCase().includes(searchValue) ||
-        stock.ticker.toLowerCase().includes(searchValue)
-    );
-    updateDropdown(filteredStocks);
-});
-
-// Lade die Aktien beim Start
-loadStocks();
-
-
-
+// 🔹 Funktion zum Analysieren der gewählten Aktie
 async function analyzeStock() {
-    const stockTicker = document.getElementById("stockDropdown").value;
+    const stockDropdown = document.getElementById("stockDropdown");
+    const stockTicker = stockDropdown.value;
+
     if (!stockTicker) {
-        alert("Bitte eine Aktie auswählen!");
+        document.getElementById("chartAnalysis").innerText = "Bitte eine Aktie auswählen!";
         return;
     }
 
+    console.log(`📡 Lade Daten für ${stockTicker}...`);
     try {
-        console.log(`📡 Lade Daten für ${stockTicker}...`);
-        const response = await fetch(`/stock-data?ticker=${stockTicker}`); // ✅ Jetzt wird "ticker" verwendet!
+        const response = await fetch(`/stock-data?ticker=${stockTicker}`);
         const data = await response.json();
 
         if (data.error) {
-            alert(data.error);
+            document.getElementById("chartAnalysis").innerText = data.error;
             return;
         }
 
         console.log("📊 Daten für Diagramm erhalten:", data);
+        document.getElementById("chartAnalysis").innerText = `✅ Analyse für ${stockTicker}`;
         renderChart(data, stockTicker);
     } catch (error) {
         console.error("❌ Fehler beim Laden der Aktien-Daten:", error);
     }
 }
 
-
+// 🔹 Funktion zur Darstellung des Charts
 function renderChart(data, stockTicker) {
     const chartContainer = document.getElementById("chartContainer");
 
@@ -86,7 +85,13 @@ function renderChart(data, stockTicker) {
 
     // 🔹 Werte & Labels für den Chart
     const labels = ["Bewertung", "Wachstum", "Qualität", "Trendstärke", "Kursstabilität"];
-    const values = [data.finalValue, data.finalGrowth, data.finalQuality, data.finalMomentum, data.finalMinVol];
+    const values = [
+        Math.round(data.finalValue), 
+        Math.round(data.finalGrowth), 
+        Math.round(data.finalQuality), 
+        Math.round(data.finalMomentum), 
+        Math.round(data.finalMinVol)
+    ]; // Werte runden
 
     // 🔹 Dynamische Farben basierend auf Wertbereichen (0-30 rot, 30-70 gelb, 70-100 grün)
     const barColors = values.map(value => {
@@ -95,7 +100,7 @@ function renderChart(data, stockTicker) {
         return "#33cc33"; // 🟢 Stark
     });
 
-    // ✅ Neues Diagramm mit visuellen Markierungen
+    // ✅ Neues Diagramm mit gerundeten Werten & visuellen Markierungen
     window.stockChartInstance = new Chart(ctx, {
         type: "bar",
         data: {
@@ -119,11 +124,14 @@ function renderChart(data, stockTicker) {
                             family: "Roboto, sans-serif",
                             size: 14
                         },
-                        color: "#333"
+                        color: "#333",
+                        callback: function(value) {
+                            return Math.round(value); // ✅ Achsenbeschriftung runden
+                        }
                     },
                     grid: {
                         drawBorder: false,
-                        color: function(context) {
+                        color: function (context) {
                             if (context.tick.value === 30 || context.tick.value === 70) {
                                 return "#666"; // 🔹 Markierungslinien für die Zonen
                             }
@@ -145,8 +153,8 @@ function renderChart(data, stockTicker) {
                 legend: { display: false }, // 🔹 Keine Legende für sauberes UI
                 tooltip: {
                     callbacks: {
-                        label: function(tooltipItem) {
-                            const value = tooltipItem.raw;
+                        label: function (tooltipItem) {
+                            const value = Math.round(tooltipItem.raw); // ✅ Tooltip-Wert runden
                             let category = "🔴 Schwach";
                             if (value >= 70) category = "🟢 Stark";
                             else if (value >= 30) category = "🟡 Neutral";
@@ -182,10 +190,9 @@ function renderChart(data, stockTicker) {
 
     // ✅ Analyse: Die zwei höchsten Werte anzeigen
     const sorted = values.map((val, index) => ({ factor: labels[index], value: val }))
-                         .sort((a, b) => b.value - a.value)
-                         .slice(0, 2);
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 2);
 
     const analysisText = `Die Faktoren ${sorted[0].factor} und ${sorted[1].factor} sind bei der Aktie ${stockTicker} am stärksten ausgeprägt.`;
     document.getElementById("chartAnalysis").innerText = analysisText;
 }
-
