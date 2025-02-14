@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStocks();
     document.getElementById("analyzeButton").addEventListener("click", analyzeStock);
 });
-let allStocks = []; // Speichert alle geladenen Aktien für die Suche
+let allStocks = []; // Speichert alle Aktien für die Suche
 
 async function loadStocks() {
     try {
@@ -13,7 +13,7 @@ async function loadStocks() {
             throw new Error(`Server-Fehler: ${await response.text()}`);
         }
 
-        allStocks = await response.json(); // Speichert alle Aktien
+        allStocks = await response.json();
         console.log("🔍 Geladene Aktien:", allStocks);
 
         updateDropdown(allStocks);
@@ -24,7 +24,7 @@ async function loadStocks() {
 
 function updateDropdown(stocks) {
     const dropdown = document.getElementById("stockDropdown");
-    dropdown.innerHTML = '<option value="">Bitte wählen...</option>';
+    dropdown.innerHTML = '<option value="">🔍 Aktie suchen oder auswählen...</option>';
 
     stocks.forEach(stock => {
         if (!stock.name || !stock.ticker) return;
@@ -37,22 +37,19 @@ function updateDropdown(stocks) {
     console.log("✅ Aktien ins Dropdown eingefügt!");
 }
 
-// 🔍 Suchfunktion für Aktiennamen & Ticker
-document.getElementById("stockSearch").addEventListener("input", function () {
+// 🔍 Live-Suche im Dropdown aktivieren
+document.getElementById("stockDropdown").addEventListener("input", function () {
     const searchValue = this.value.toLowerCase();
-    
-    if (!searchValue) {
-        updateDropdown(allStocks); // Zeigt alle an, wenn nichts eingegeben wurde
-        return;
-    }
-
     const filteredStocks = allStocks.filter(stock =>
         stock.name.toLowerCase().includes(searchValue) ||
         stock.ticker.toLowerCase().includes(searchValue)
     );
-
     updateDropdown(filteredStocks);
 });
+
+// Lade die Aktien beim Start
+loadStocks();
+
 
 
 async function analyzeStock() {
