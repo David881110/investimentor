@@ -13,7 +13,10 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // ✅ Statische Dateien bereitstellen (HTML, CSS, JS)
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public", {
+    maxAge: "1y",  // Speichert CSS, JS für 1 Jahr
+    etag: false
+}));
 
 // ✅ Multer für Datei-Uploads konfigurieren
 const storage = multer.diskStorage({
