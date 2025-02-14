@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadStocks();
     document.getElementById("analyzeButton").addEventListener("click", analyzeStock);
 });
+let allStocks = []; // Speichert alle geladenen Aktien für die Suche
 
 async function loadStocks() {
     try {
@@ -12,35 +13,47 @@ async function loadStocks() {
             throw new Error(`Server-Fehler: ${await response.text()}`);
         }
 
-        const stocks = await response.json();
-        console.log("🔍 Geladene Aktien:", stocks); // Debugging-Ausgabe
+        allStocks = await response.json(); // Speichert alle Aktien
+        console.log("🔍 Geladene Aktien:", allStocks);
 
-        if (!Array.isArray(stocks) || stocks.length === 0) {
-            console.error("⚠️ Keine Aktien gefunden!");
-            document.getElementById("stockDropdown").innerHTML = "<option>⚠️ Keine Aktien gefunden</option>";
-            return;
-        }
-
-        const dropdown = document.getElementById("stockDropdown");
-        dropdown.innerHTML = '<option value="">Bitte wählen...</option>';
-
-        stocks.forEach(stock => {
-            if (!stock.name || !stock.ticker) {
-                console.warn("⚠️ Ungültiger Eintrag:", stock);
-                return;
-            }
-            console.log(`📌 Hinzufügen: ${stock.name} (${stock.ticker})`);
-            const option = document.createElement("option");
-            option.value = stock.ticker;
-            option.textContent = `${stock.name} (${stock.ticker})`;
-            dropdown.appendChild(option);
-        });
-
-        console.log("✅ Aktien ins Dropdown eingefügt!");
+        updateDropdown(allStocks);
     } catch (error) {
         console.error("❌ Fehler beim Laden der Aktien:", error);
     }
 }
+
+function updateDropdown(stocks) {
+    const dropdown = document.getElementById("stockDropdown");
+    dropdown.innerHTML = '<option value="">Bitte wählen...</option>';
+
+    stocks.forEach(stock => {
+        if (!stock.name || !stock.ticker) return;
+        const option = document.createElement("option");
+        option.value = stock.ticker;
+        option.textContent = `${stock.name} (${stock.ticker})`;
+        dropdown.appendChild(option);
+    });
+
+    console.log("✅ Aktien ins Dropdown eingefügt!");
+}
+
+// 🔍 Suchfunktion für Aktiennamen & Ticker
+document.getElementById("stockSearch").addEventListener("input", function () {
+    const searchValue = this.value.toLowerCase();
+    
+    if (!searchValue) {
+        updateDropdown(allStocks); // Zeigt alle an, wenn nichts eingegeben wurde
+        return;
+    }
+
+    const filteredStocks = allStocks.filter(stock =>
+        stock.name.toLowerCase().includes(searchValue) ||
+        stock.ticker.toLowerCase().includes(searchValue)
+    );
+
+    updateDropdown(filteredStocks);
+});
+
 
 async function analyzeStock() {
     const stockTicker = document.getElementById("stockDropdown").value;

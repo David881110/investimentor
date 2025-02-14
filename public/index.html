@@ -25,12 +25,12 @@
             <section class="analysis-section">
                 <h2 class="screener-title">InvestiMentor Aktienscreener</h2>
                 <div class="dropdown-container">
-                    <label for="stockDropdown">Wähle eine Aktie:</label>
+                    <input type="text" id="stockSearch" placeholder="🔍 Aktie suchen... (Name oder Ticker)">
                     <select id="stockDropdown">
                         <option value="">Bitte wählen...</option>
                     </select>
                     <button id="analyzeButton">Analysieren</button>
-                </div>
+                </div>                
                 <div id="chartContainer">
                     <canvas id="stockChart"></canvas>
                 </div>
