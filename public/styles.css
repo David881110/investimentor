@@ -499,3 +499,20 @@ footer a:hover {
     letter-spacing: 1px;
     animation: fadeIn 1s ease-in-out;
 }
+/* CLS-Fix: Reserviert Platz für wichtige Elemente */
+.factors-section {
+    min-height: 300px; /* Platzhalter für das Layout */
+}
+
+.cta-main-button {
+    min-height: 50px; /* Stellt sicher, dass Buttons nicht springen */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+img {
+    width: 100%;
+    height: auto;
+    max-width: 600px; /* Verhindert Größenänderungen */
+}
