@@ -12,21 +12,18 @@ if (!fs.existsSync(uploadDir)) {
     console.log("📂 'uploads/' Ordner wurde erstellt!");
 }
 
-// ✅ Statische Dateien bereitstellen (HTML, CSS, JS)
-app.use(express.static("public", {
-    maxAge: "1y",  // Speichert CSS, JS für 1 Jahr
-    etag: false
-}));
+// ✅ Middleware für JSON-Anfragen
+app.use(express.json());
+app.use(express.static("public", { maxAge: "1y", etag: false }));
 
-// ✅ Multer für Datei-Uploads konfigurieren
+// ✅ Datei-Upload für Aktien-Daten
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
     filename: (req, file, cb) => cb(null, "stocks.txt")
 });
 const upload = multer({ storage });
 
-// ✅ Datei-Upload Route
-app.post("/upload", upload.single("file"), (req, res) => {
+app.post("/upload", upload.single("stockFile"), (req, res) => {
     if (!req.file) return res.status(400).send("❌ Keine Datei hochgeladen!");
     console.log(`✅ Datei gespeichert: ${path.join(uploadDir, "stocks.txt")}`);
     res.send("✅ Datei erfolgreich hochgeladen!");
@@ -34,76 +31,105 @@ app.post("/upload", upload.single("file"), (req, res) => {
 
 // ✅ Aktienliste aus `stocks.txt` abrufen
 app.get("/stocks", (req, res) => {
-    console.log("📡 API-Call: /stocks");
     const filePath = path.join(__dirname, "uploads", "stocks.txt");
 
     if (!fs.existsSync(filePath)) {
-        console.error("❌ stocks.txt nicht gefunden!");
         return res.status(404).json({ error: "❌ Keine Aktien gefunden!" });
     }
 
     fs.readFile(filePath, "utf8", (err, data) => {
-        if (err) {
-            console.error("❌ Fehler beim Lesen der Datei:", err);
-            return res.status(500).json({ error: "❌ Fehler beim Lesen der Datei!" });
-        }
+        if (err) return res.status(500).json({ error: "❌ Fehler beim Lesen der Datei!" });
 
-        const rows = data.trim().split("\n");
-        const headers = rows[0].split(",");
-
-        // Prüfen, ob die Datei die erwarteten Spalten enthält
-        if (!headers.includes("Ticker") || !headers.includes("Unternehmensname")) {
-            console.error("❌ Falsches Format in stocks.txt!");
-            return res.status(400).json({ error: "❌ Falsches Datei-Format!" });
-        }
-
-        const stocks = rows.slice(1).map(line => {
+        const rows = data.trim().split("\n").slice(1); // Erste Zeile ignorieren (Header)
+        const stocks = rows.map(line => {
             const parts = line.split(",");
-            return {
-                ticker: parts[1].trim(),  // Ticker
-                name: parts[2].trim() // Unternehmensname
-            };
-        }).filter(stock => stock.ticker && stock.name); // Filtert ungültige Einträge raus
+            return { ticker: parts[1].trim(), name: parts[2].trim() };
+        });
 
-        console.log("📊 Aktien geladen:", stocks);
         res.json(stocks);
     });
 });
+// ✅ Portfolio-Analyse: Gewichtete Berechnung aus `stocks.txt`
+app.get("/portfolio-data", (req, res) => {
+    try {
+        console.log("📡 Portfolio-Analyse gestartet...");
+        console.log("📩 Eingehende Portfolio-Daten:", req.query.portfolio);
 
-
-// ✅ Route `/stock-data` für Einzelanalyse einer Aktie
-app.get("/stock-data", (req, res) => {
-    const { ticker } = req.query; // ✅ Jetzt wird "ticker" statt "symbol" verwendet!
-    const filePath = path.join(__dirname, "uploads", "stocks.txt");
-
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: "❌ Keine Aktien vorhanden!" });
-    }
-
-    fs.readFile(filePath, "utf8", (err, data) => {
-        if (err) {
-            return res.status(500).json({ error: "❌ Fehler beim Lesen der Datei!" });
+        const portfolio = JSON.parse(req.query.portfolio);
+        if (!portfolio || portfolio.length === 0) {
+            console.error("❌ Portfolio ist leer!");
+            return res.status(400).json({ error: "❌ Portfolio ist leer!" });
         }
 
-        const stock = data.split("\n")
-            .slice(1)
-            .map(line => line.split(","))
-            .find(parts => parts[1].trim() === ticker); // ✅ Suche jetzt nach dem "ticker"
+        const filePath = path.join(__dirname, "uploads", "stocks.txt");
 
-        if (!stock) {
-            return res.status(404).json({ error: `❌ Aktie mit Ticker '${ticker}' nicht gefunden!` });
+        if (!fs.existsSync(filePath)) {
+            console.error("❌ stocks.txt nicht gefunden!");
+            return res.status(404).json({ error: "❌ Keine Aktien vorhanden!" });
         }
 
-        res.json({
-            finalValue: parseFloat(stock[20]), // Bewertung
-            finalGrowth: parseFloat(stock[7]), // Wachstum
-            finalQuality: parseFloat(stock[16]), // Qualität
-            finalMomentum: parseFloat(stock[11]), // Trendstärke
-            finalMinVol: parseFloat(stock[22]) // Kursstabilität
+        fs.readFile(filePath, "utf8", (err, data) => {
+            if (err) {
+                console.error("❌ Fehler beim Lesen der Datei:", err);
+                return res.status(500).json({ error: "❌ Fehler beim Lesen der Datei!" });
+            }
+
+            console.log("📂 Datei erfolgreich geladen!");
+
+            const rows = data.split("\n").slice(1);
+            const stockData = {};
+
+            rows.forEach(line => {
+                const parts = line.split(",");
+                if (parts.length > 22) { // Sicherheitsprüfung
+                    stockData[parts[1].trim()] = {
+                        finalValue: parseFloat(parts[20]) || 0,
+                        finalGrowth: parseFloat(parts[7]) || 0,
+                        finalQuality: parseFloat(parts[16]) || 0,
+                        finalMomentum: parseFloat(parts[11]) || 0,
+                        finalMinVol: parseFloat(parts[22]) || 0
+                    };
+                }
+            });
+
+            console.log("📊 Verfügbare Aktien-Daten:", stockData);
+
+            let weightedPortfolio = {
+                finalValue: 0,
+                finalGrowth: 0,
+                finalQuality: 0,
+                finalMomentum: 0,
+                finalMinVol: 0
+            };
+
+            let totalWeight = portfolio.reduce((sum, stock) => sum + stock.weight, 0);
+            if (totalWeight > 100) {
+                console.error("❌ Gewichtung überschreitet 100%!");
+                return res.status(400).json({ error: "❌ Gewichtung darf 100% nicht überschreiten!" });
+            }
+
+            portfolio.forEach(stock => {
+                let data = stockData[stock.ticker];
+                if (data) {
+                    weightedPortfolio.finalValue += data.finalValue * (stock.weight / 100);
+                    weightedPortfolio.finalGrowth += data.finalGrowth * (stock.weight / 100);
+                    weightedPortfolio.finalQuality += data.finalQuality * (stock.weight / 100);
+                    weightedPortfolio.finalMomentum += data.finalMomentum * (stock.weight / 100);
+                    weightedPortfolio.finalMinVol += data.finalMinVol * (stock.weight / 100);
+                } else {
+                    console.error(`⚠️ Aktie ${stock.ticker} nicht in stocks.txt gefunden!`);
+                }
+            });
+
+            console.log("✅ Berechnetes Portfolio:", weightedPortfolio);
+            res.json(weightedPortfolio);
         });
-    });
-});
 
+    } catch (error) {
+        console.error("❌ Fehler bei der Portfolio-Berechnung:", error);
+        res.status(500).json({ error: "❌ Fehler bei der Portfolio-Berechnung!" });
+    }
+});
 
 // ✅ Server starten
 const PORT = 3000;

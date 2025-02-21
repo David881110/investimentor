@@ -3,43 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InvestiMentor - Aktienscreener</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>Pro Factor Invest - Faktorbasierte Aktienanalyse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
     <!-- ✅ HEADER -->
     <header>
-        <div class="container">
-            <h1>InvestiMentor</h1>
-            <nav>
-                <a href="/blog.html" class="blog-button">Blog</a>
+        <div class="container header-container">
+            <h1 class="header-title">
+                <i class="fas fa-chart-line logo-icon"></i> 
+                <span class="pro-text">Pro</span>FactorInvest
+            </h1>
+            <nav class="cta-buttons">
+                <a href="/portfolioscreener.html" class="cta-button">
+                    <i class="fas fa-search"></i> Portfolioscreener
+                </a>
             </nav>
         </div>
     </header>
 
-    <main>
-        <div class="container">
-            <section class="analysis-section">
-                <h2 class="screener-title">InvestiMentor Aktienscreener</h2>
-                <div class="dropdown-container">
-                    <input type="text" id="stockSearch" placeholder="🔍 Aktie suchen oder auswählen..." oninput="filterStocks()" list="stockList">
-                    <datalist id="stockList"></datalist>
-                    <button id="analyzeButton">Analysieren</button>                
-                </div>               
-                <div id="chartContainer">
-                    <canvas id="stockChart"></canvas>
-                </div>
-                <p id="chartAnalysis"></p>
-            </section>
+    <!-- 🔥 HERO SECTION -->
+    <section class="hero">
+        <div class="container hero-content">
+            <h2>Investiere smarter mit Faktor-Investing</h2>
+            <p>Nutze wissenschaftlich fundierte Faktoren wie <strong>Value</strong>, <strong>Growth</strong>, <strong>Quality</strong>, <strong>Momentum</strong> und <strong>Minimum Varianz</strong>, um deine Investments fundierter zu bewerten.</p>
+            <a href="/portfolioscreener.html" class="cta-main-button">
+                <i class="fas fa-chart-pie"></i> Starte deine Portfolio-Analyse
+            </a>
         </div>
-    </main>
+    </section>
 
+    <!-- 🏆 FAKTOR-ERKLÄRUNGEN -->
+    <section class="factors-section">
+        <h2 class="section-title">Wichtige Aktienfaktoren im Überblick</h2>
+        <div class="factors-container">
+            <div class="factor-card">
+                <i class="fas fa-chart-bar"></i>
+                <h3>Value</h3>
+                <p>Wie attraktiv sind Aktien bewertet?</p>
+            </div>
+            <div class="factor-card">
+                <i class="fas fa-arrow-up"></i>
+                <h3>Growth</h3>
+                <p>Können die Unternehmen wachsen?</p>
+            </div>
+            <div class="factor-card">
+                <i class="fas fa-check-circle"></i>
+                <h3>Quality</h3>
+                <p>Sind Unternehmen profitabel?</p>
+            </div>
+            <div class="factor-card">
+                <i class="fas fa-wave-square"></i>
+                <h3>Momentum</h3>
+                <p>Weisen die Aktien einen Kurstrend auf?</p>
+            </div>
+            <div class="factor-card">
+                <i class="fas fa-balance-scale"></i>
+                <h3>Minimum Varianz</h3>
+                <p>Wie stark schwanken die Aktien?</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 🔹 FOOTER -->
     <footer>
         <div class="container">
-            <p>&copy; 2025 InvestiMentor. Alle Rechte vorbehalten. | <a href="/impressum.html">Impressum</a> | <a href="/datenschutz.html">Datenschutz</a></p>
+            <p>&copy; 2025 Pro Factor Invest. Alle Rechte vorbehalten. | 
+                <a href="/impressum.html"><i class="fas fa-info-circle"></i> Impressum</a> | 
+                <a href="/datenschutz.html"><i class="fas fa-shield-alt"></i> Datenschutz</a>
+            </p>
         </div>
     </footer>    
 

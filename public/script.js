@@ -1,113 +1,219 @@
 document.addEventListener("DOMContentLoaded", () => {
-    loadStocks();
-    document.getElementById("analyzeButton").addEventListener("click", analyzeStock);
+    loadComponent("components/header.html", "header-container");
+    loadComponent("components/footer.html", "footer-container");
 });
 
-let allStocks = []; // Speichert alle Aktien für das Dropdown
+function loadComponent(file, targetId) {
+    fetch(file)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById(targetId).innerHTML = data;
+        })
+        .catch(error => console.error(`Fehler beim Laden von ${file}:`, error));
+}
 
-// 🔹 Aktien aus /stocks laden (nur einmal)
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log("🔄 Starte Skript...");
+    await loadStocks();
+
+    // Event-Listener für das Aktien-Suchfeld
+    const stockSearch = document.getElementById("portfolioStockSearch");
+    if (stockSearch) {
+        stockSearch.addEventListener("change", addPortfolioStock);
+    }
+
+    // Event-Listener für Portfolio-Analyse
+    const analyzePortfolio = document.getElementById("analyzePortfolio");
+    if (analyzePortfolio) {
+        analyzePortfolio.addEventListener("click", analyzePortfolioData);
+    }
+});
+
+let allStocks = [];
+let portfolio = [];
+
+// 🔹 Aktien aus `/stocks` laden
 async function loadStocks() {
     try {
         console.log("📡 Lade Aktien aus /stocks...");
         const response = await fetch("/stocks");
-
         if (!response.ok) {
-            throw new Error(`Server-Fehler: ${await response.text()}`);
+            throw new Error(`Server-Fehler: ${response.status} - ${await response.text()}`);
         }
-
         allStocks = await response.json();
-        console.log("🔍 Geladene Aktien:", allStocks);
-
+        console.log("✅ Aktien erfolgreich geladen:", allStocks);
         updateStockList(allStocks);
     } catch (error) {
         console.error("❌ Fehler beim Laden der Aktien:", error);
     }
 }
 
-// 🔹 Aktien ins "datalist"-Dropdown einfügen
+// 🔹 Aktien in die Suchliste einfügen
 function updateStockList(stocks) {
     const stockList = document.getElementById("stockList");
-    stockList.innerHTML = ""; // Leeren, um doppelte Einträge zu vermeiden
+    if (!stockList) return;
+    stockList.innerHTML = "";
 
     stocks.forEach(stock => {
-        if (!stock.name || !stock.ticker) return;
-        const option = document.createElement("option");
-        option.value = `${stock.name} (${stock.ticker})`;
-        stockList.appendChild(option);
+        if (stock.name && stock.ticker) {
+            const option = document.createElement("option");
+            option.value = `${stock.name} (${stock.ticker})`;
+            stockList.appendChild(option);
+        }
     });
-
-    console.log("✅ Aktien in das Suchfeld eingefügt!");
 }
 
-// 🔹 Live-Suche nach Aktien
-function filterStocks() {
-    const input = document.getElementById("stockSearch").value.toLowerCase();
-    const matchedStock = allStocks.find(stock =>
-        `${stock.name} (${stock.ticker})`.toLowerCase() === input
-    );
-
-    if (matchedStock) {
-        console.log("📌 Aktie gewählt: " + matchedStock.ticker);
-    }
-}
-
-// 🔹 Funktion zum Analysieren der gewählten Aktie
-async function analyzeStock() {
-    const stockInput = document.getElementById("stockSearch").value;
+// 🔹 Aktie zum Portfolio hinzufügen (durch Auswahl im Suchfeld)
+function addPortfolioStock() {
+    const stockInput = document.getElementById("portfolioStockSearch");
     const selectedStock = allStocks.find(stock =>
-        `${stock.name} (${stock.ticker})` === stockInput
+        `${stock.name} (${stock.ticker})` === stockInput.value
     );
 
     if (!selectedStock) {
-        document.getElementById("chartAnalysis").innerText = "Bitte eine gültige Aktie auswählen!";
         return;
     }
 
-    console.log(`📡 Lade Daten für ${selectedStock.ticker}...`);
-    try {
-        const response = await fetch(`/stock-data?ticker=${selectedStock.ticker}`);
-        const data = await response.json();
+    // Prüfen, ob Aktie bereits im Portfolio ist
+    if (portfolio.find(stock => stock.ticker === selectedStock.ticker)) {
+        alert("❌ Diese Aktie ist bereits im Portfolio!");
+        stockInput.value = "";
+        return;
+    }
 
-        if (data.error) {
-            document.getElementById("chartAnalysis").innerText = data.error;
-            return;
-        }
+    // Aktie hinzufügen
+    portfolio.push({ ticker: selectedStock.ticker, weight: 0 });
+    adjustWeights();
+    renderPortfolioList();
 
-        console.log("📊 Daten für Diagramm erhalten:", data);
-        document.getElementById("chartAnalysis").innerText = `✅ Analyse für ${selectedStock.ticker}`;
-        renderChart(data, selectedStock.ticker);
-    } catch (error) {
-        console.error("❌ Fehler beim Laden der Aktien-Daten:", error);
+    // Suchfeld zurücksetzen
+    stockInput.value = "";
+}
+
+// 🔹 Gewichtungen anpassen, damit die Summe immer exakt 100% ist
+function adjustWeights() {
+    if (portfolio.length === 0) return;
+
+    const baseWeight = (100 / portfolio.length).toFixed(2);
+    portfolio.forEach(stock => stock.weight = parseFloat(baseWeight));
+
+    // Sonderfall: Wenn 3 Aktien => 33.34 für die letzte Aktie
+    if (portfolio.length === 3) {
+        portfolio[2].weight = parseFloat((100 - 2 * baseWeight).toFixed(2));
     }
 }
 
-// 🔹 Funktion zur Darstellung des Charts
-function renderChart(data, stockTicker) {
-    const chartContainer = document.getElementById("chartContainer");
+// 🔹 Portfolio-Liste aktualisieren
+function renderPortfolioList() {
+    const portfolioList = document.getElementById("portfolioList");
+    if (!portfolioList) return;
+    portfolioList.innerHTML = "";
 
-    // ✅ Vorheriges Canvas-Element entfernen und neu erstellen
-    chartContainer.innerHTML = '<canvas id="stockChart"></canvas>';
-    const ctx = document.getElementById("stockChart").getContext("2d");
+    portfolio.forEach((stock, index) => {
+        const listItem = document.createElement("li");
+        listItem.classList.add("portfolio-item");
+        listItem.innerHTML = `
+            <div class="portfolio-content">
+                <strong>${stock.ticker}</strong>
+                <input type="number" min="0" max="100" step="0.01" value="${stock.weight}" onchange="updateWeight('${stock.ticker}', this.value)">
+                <button onclick="removeStock('${stock.ticker}')">❌</button>
+            </div>
+        `;
 
-    // 🔹 Werte & Labels für den Chart
-    const labels = ["Bewertung", "Wachstum", "Qualität", "Trendstärke", "Kursstabilität"];
-    const values = [
-        Math.round(data.finalValue), 
-        Math.round(data.finalGrowth), 
-        Math.round(data.finalQuality), 
-        Math.round(data.finalMomentum), 
-        Math.round(data.finalMinVol)
-    ]; // Werte runden
-
-    // 🔹 Dynamische Farben basierend auf Wertbereichen (0-30 rot, 30-70 gelb, 70-100 grün)
-    const barColors = values.map(value => {
-        if (value < 30) return "#ff4d4d"; // 🔴 Schwach
-        if (value < 70) return "#ffcc00"; // 🟡 Neutral
-        return "#33cc33"; // 🟢 Stark
+        portfolioList.appendChild(listItem);
     });
 
-    // ✅ Neues Diagramm mit gerundeten Werten & visuellen Markierungen
-    window.stockChartInstance = new Chart(ctx, {
+    validateWeights();
+}
+
+// 🔹 Gewicht aktualisieren
+function updateWeight(ticker, newWeight) {
+    let stock = portfolio.find(stock => stock.ticker === ticker);
+    if (!stock) return;
+    stock.weight = parseFloat(newWeight) || 0;
+
+    validateWeights();
+}
+
+// 🔹 Aktie aus Portfolio entfernen
+function removeStock(ticker) {
+    portfolio = portfolio.filter(stock => stock.ticker !== ticker);
+    adjustWeights();
+    renderPortfolioList();
+}
+
+// 🔹 Prüfen, ob die Gewichtung exakt 100% ergibt
+function validateWeights() {
+    let totalWeight = portfolio.reduce((sum, stock) => sum + stock.weight, 0);
+    totalWeight = parseFloat(totalWeight.toFixed(2));
+
+    const errorText = document.getElementById("weightError");
+    if (!errorText) return;
+
+    if (totalWeight !== 100) {
+        errorText.innerText = "❌ Die Gesamtgewichtung muss genau 100% betragen!";
+        errorText.style.display = "block";
+    } else {
+        errorText.style.display = "none";
+    }
+}
+
+// 🔹 Portfolio analysieren & Chart rendern
+async function analyzePortfolioData() {
+    let totalWeight = portfolio.reduce((sum, stock) => sum + stock.weight, 0);
+    totalWeight = parseFloat(totalWeight.toFixed(2));
+
+    if (totalWeight !== 100) {
+        alert("❌ Die Gesamtgewichtung muss genau 100% betragen!");
+        return;
+    }
+
+    if (portfolio.length === 0) {
+        alert("Bitte mindestens eine Aktie hinzufügen!");
+        return;
+    }
+
+    console.log("📡 Sende Portfolio-Daten an Server:", portfolio);
+    try {
+        const response = await fetch(`/portfolio-data?portfolio=${encodeURIComponent(JSON.stringify(portfolio))}`);
+        const data = await response.json();
+
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        console.log("📊 Portfolio-Daten erhalten:", data);
+        renderPortfolioChart(data);
+    } catch (error) {
+        console.error("❌ Fehler bei der Portfolio-Analyse:", error);
+    }
+}
+
+
+
+// 🔹 Portfolio-Chart rendern
+function renderPortfolioChart(data) {
+    const chartContainer = document.getElementById("portfolioChartContainer");
+    chartContainer.innerHTML = '<canvas id="portfolioChart"></canvas>';
+    const ctx = document.getElementById("portfolioChart").getContext("2d");
+
+    const labels = ["Bewertung", "Wachstum", "Qualität", "Trendstärke", "Kursstabilität"];
+    const values = [
+        Math.round(data.finalValue),
+        Math.round(data.finalGrowth),
+        Math.round(data.finalQuality),
+        Math.round(data.finalMomentum),
+        Math.round(data.finalMinVol)
+    ];
+
+    const barColors = values.map(value => {
+        if (value < 30) return "#ff4d4d";  // 🔴 Rot = Schwach
+        if (value < 70) return "#ffcc00";  // 🟡 Gelb = Neutral
+        return "#33cc33";  // 🟢 Grün = Stark
+    });
+
+    new Chart(ctx, {
         type: "bar",
         data: {
             labels: labels,
@@ -125,80 +231,47 @@ function renderChart(data, stockTicker) {
                 y: {
                     beginAtZero: true,
                     max: 100,
-                    ticks: {
-                        font: {
-                            family: "Roboto, sans-serif",
-                            size: 14
-                        },
-                        color: "#333",
-                        callback: function(value) {
-                            return Math.round(value); // ✅ Achsenbeschriftung runden
-                        }
-                    },
                     grid: {
-                        drawBorder: false,
                         color: function (context) {
-                            if (context.tick.value === 30 || context.tick.value === 70) {
-                                return "#666"; // 🔹 Markierungslinien für die Zonen
-                            }
-                            return "#ddd";
+                            return context.tick.value === 30 || context.tick.value === 70 ? "#666" : "#ddd";
                         }
-                    }
-                },
-                x: {
-                    ticks: {
-                        font: {
-                            family: "Roboto, sans-serif",
-                            size: 14
-                        },
-                        color: "#333"
                     }
                 }
             },
             plugins: {
-                legend: { display: false }, // 🔹 Keine Legende für sauberes UI
-                tooltip: {
-                    callbacks: {
-                        label: function (tooltipItem) {
-                            const value = Math.round(tooltipItem.raw); // ✅ Tooltip-Wert runden
-                            let category = "🔴 Schwach";
-                            if (value >= 70) category = "🟢 Stark";
-                            else if (value >= 30) category = "🟡 Neutral";
-                            return `${tooltipItem.label}: ${value} (${category})`;
-                        }
-                    }
-                },
-                annotation: {
-                    annotations: [
-                        {
-                            type: "box",
-                            yMin: 0,
-                            yMax: 30,
-                            backgroundColor: "rgba(255, 77, 77, 0.1)", // 🔴 Roter Hintergrund für schwach
-                        },
-                        {
-                            type: "box",
-                            yMin: 30,
-                            yMax: 70,
-                            backgroundColor: "rgba(255, 204, 0, 0.1)", // 🟡 Gelber Hintergrund für neutral
-                        },
-                        {
-                            type: "box",
-                            yMin: 70,
-                            yMax: 100,
-                            backgroundColor: "rgba(51, 204, 51, 0.1)", // 🟢 Grüner Hintergrund für stark
-                        }
-                    ]
-                }
+                legend: { display: false }
             }
         }
     });
 
-    // ✅ Analyse: Die zwei höchsten Werte anzeigen
-    const sorted = values.map((val, index) => ({ factor: labels[index], value: val }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 2);
+    updateFactorAnalysis(values, labels);
 
-    const analysisText = `Die Faktoren ${sorted[0].factor} und ${sorted[1].factor} sind bei der Aktie ${stockTicker} am stärksten ausgeprägt.`;
-    document.getElementById("chartAnalysis").innerText = analysisText;
+    function updateFactorAnalysis(values, labels) {
+        const strongFactors = labels.filter((_, i) => values[i] > 70);
+        const weakFactors = labels.filter((_, i) => values[i] < 30);
+        const neutralFactors = labels.filter((_, i) => values[i] >= 30 && values[i] <= 70);
+    
+        let analysisText = "🔍 Basierend auf der Faktoranalyse zeigt dein Portfolio ";
+        
+        if (strongFactors.length > 0) {
+            analysisText += `starke Ausprägungen bei ${strongFactors.join(", ")}`;
+        }
+        if (weakFactors.length > 0) {
+            analysisText += strongFactors.length > 0 ? ", aber " : "";
+            analysisText += `schwache Werte bei ${weakFactors.join(", ")}`;
+        }
+        if (neutralFactors.length > 0 && weakFactors.length > 0 && strongFactors.length > 0) {
+            analysisText += " und ";
+        } else if (neutralFactors.length > 0 && (strongFactors.length > 0 || weakFactors.length > 0)) {
+            analysisText += " sowie ";
+        }
+        if (neutralFactors.length > 0) {
+            analysisText += `neutrale Tendenzen bei ${neutralFactors.join(", ")}`;
+        }
+    
+        analysisText += "."; // Punkt am Ende setzen
+    
+        document.getElementById("portfolioChartAnalysis").innerText = analysisText;
+    }
+        
 }
